@@ -1,0 +1,104 @@
+
+buildscript {
+	ext {
+		springBootVersion = '2.1.1.RELEASE'
+		projectName = 'Test'
+	}
+	repositories {
+// 		jcenter()
+   		mavenCentral()
+  	}
+
+  	dependencies {
+		classpath("org.springframework.boot:spring-boot-gradle-plugin:${springBootVersion}")
+		classpath 'org.sonarsource.scanner.gradle:sonarqube-gradle-plugin:2.6'
+  	}
+}
+
+
+apply plugin: 'java'
+apply plugin: 'eclipse'
+apply plugin: 'org.springframework.boot'
+apply plugin: 'io.spring.dependency-management'
+apply plugin: 'war'
+
+group = 'com.university.management'
+version = '0.0.1'
+sourceCompatibility = '1.8'
+
+
+repositories {
+	mavenCentral()
+	maven { url 'https://repo.spring.io/milestone' }
+	maven { url 'https://repo.spring.io/snapshot' }
+}
+configurations {
+    developmentOnly
+    runtimeClasspath {
+        extendsFrom developmentOnly
+    }
+}
+dependencies {
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
+}
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	compileOnly 'org.projectlombok:lombok'
+	implementation('org.springframework.boot:spring-boot-starter-jdbc')
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	providedRuntime 'org.springframework.boot:spring-boot-starter-tomcat'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	implementation('org.springframework.boot:spring-boot-starter-data-rest')
+	implementation('org.springframework.boot:spring-boot-starter-hateoas')
+	// https://mvnrepository.com/artifact/org.hibernate/hibernate-core
+    compile group: 'org.hibernate', name: 'hibernate-core', version: '5.2.17.Final'
+	
+	compile "io.springfox:springfox-swagger2:2.9.2"
+	compile "io.springfox:springfox-swagger-ui:2.9.2"
+    testCompile group: 'org.mockito', name: 'mockito-core', version: '2.21.0'
+    compile files('lib/oracle/ojdbc8.jar')
+	//compile files('lib/sqlserver/sqljdbc4.jar')
+
+}
+
+// Gradle Task for Java Documentation
+task genDoc(type: Javadoc) {
+  source = sourceSets.main.allJava
+  classpath = configurations.compile // ensure your dependencies are using compile
+  destinationDir = file('javadoc/')
+//  exclude "**/domain/**"
+  title = "${projectName}"
+}
+
+test.onlyIf {
+	Boolean.getBoolean('skip.tests')
+}
+
+test {
+	ignoreFailures = true
+    useJUnitPlatform()
+}
+// Gradle Task for Consolidating Deployable Files
+task deploy(type: Copy) {
+	from jar
+    from  "" + project.buildDir + "/libs"
+    include '**/*.jar'
+	include '**/*.war'
+    into "deploy"
+}
+
+def getDate() {
+    return new Date().format('yyyyMMddHHmmss')
+}
+
+configurations {
+	providedRuntime
+	compile.exclude module: 'spring-boot-starter-logging' // to replace with log4j2 and fix the exception Exception in thread "main" java.lang.StackOverflowError at org.apache.logging.log4j.util.StackLocator.getCallerClass(StackLocator.java:112)
+	//compile.exclude module: 'junit' 
+//	compile.exclude module: 'hibernate-validator'
+//	compile.exclude module: 'spring-boot-starter-json' // to replace with gson removing causes problems with io.springfox and spring-boot-starter-actuator: Error creating bean with name 'objectMapperConfigurer'
+}
+
+defaultTasks 'clean', 'eclipse','build','genDoc','bootJar', 'deploy'
