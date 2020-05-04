@@ -23,7 +23,7 @@ public class SwaggerConfig {
 	}
 	   private ApiInfo apiInfo() {
 	      return new ApiInfoBuilder()
-	         .title("Univesity Management Banking Component APIs")
+	         .title("Univesity Management Component APIs")
 	         .description("RESTful API Component Description")
 	         .version("1.0.5")
 	         .build();
